@@ -1,7 +1,7 @@
 import * as cache from "@actions/cache";
 import * as utils from "@actions/cache/lib/internal/cacheUtils";
-import { createTar } from "./createTar";
 import { listTar } from "./listTar";
+import { extractTar } from "./extractTar";
 import { CompressionMethod } from "@actions/cache/lib/internal/constants";
 
 import * as core from "@actions/core";
@@ -40,7 +40,7 @@ async function restoreCache() {
 
       const mc = newMinio();
 
-      const compressionMethod = CompressionMethod.None;
+      const compressionMethod = CompressionMethod.Gzip;
       const cacheFileName = "cache.tar";
       const archivePath = path.join(
         await utils.createTempDirectory(),
@@ -48,11 +48,10 @@ async function restoreCache() {
       );
 
       const { item: obj, matchingKey } = await findObject(
-        mc,
-        bucket,
-        key,
-        restoreKeys,
-        compressionMethod
+          mc,
+          bucket,
+          key,
+          restoreKeys
       );
       core.debug("found cache object");
       saveMatchedKey(matchingKey);
@@ -62,12 +61,12 @@ async function restoreCache() {
       await mc.fGetObject(bucket, obj.name, archivePath);
 
       if (core.isDebug()) {
-        await listTar(archivePath, compressionMethod);
+        await listTar(archivePath);
       }
 
       core.info(`Cache Size: ${formatSize(obj.size)} (${obj.size} bytes)`);
 
-      await extractTar(archivePath, compressionMethod);
+      await extractTar(archivePath);
       setCacheHitOutput(matchingKey === key);
       setCacheSizeOutput(obj.size)
       core.info("Cache restored from s3 successfully");

@@ -6,10 +6,9 @@ import { CompressionMethod } from "@actions/cache/lib/internal/constants";
 
 export async function createTar(
   archiveFolder: string,
-  sourceDirectories: string[],
-  compressionMethod: CompressionMethod
+  sourceDirectories: string[]
 ): Promise<void> {
-  const cacheFileName = getCacheFileName(compressionMethod);
+  const cacheFileName = "cache.tar";
   const archivePath = path.join(archiveFolder, cacheFileName);
 
   core.debug(`Creating tarball: ${archivePath}`);

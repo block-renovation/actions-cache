@@ -104,41 +104,33 @@ type FindObjectResult = {
 };
 
 export async function findObject(
-  mc: minio.Client,
-  bucket: string,
-  key: string,
-  restoreKeys: string[],
-  compressionMethod: CompressionMethod
-): Promise<FindObjectResult> {
-  core.debug("Key: " + JSON.stringify(key));
-  core.debug("Restore keys: " + JSON.stringify(restoreKeys));
+    mc: minio.Client,
+    bucket: string,
+    key: string,
+    restoreKeys: string[]
+): Promise<{ item: { name: string; size: number }; matchingKey: string }> {
+  const keys = [key, ...restoreKeys];
+  const suffix = ".tar";
 
-  core.debug(`Finding exact macth for: ${key}`);
-  const exactMatch = await listObjects(mc, bucket, key);
-  core.debug(`Found ${JSON.stringify(exactMatch, null, 2)}`);
-  if (exactMatch.length) {
-    const result = { item: exactMatch[0], matchingKey: key };
-    core.debug(`Using ${JSON.stringify(result)}`);
-    return result;
-  }
-
-  for (const restoreKey of restoreKeys) {
-    const fn = "cache.tar";
-    core.debug(`Finding object with prefix: ${restoreKey}`);
-    let objects = await listObjects(mc, bucket, restoreKey);
-    objects = objects.filter((o) => o.name.includes(fn));
-    core.debug(`Found ${JSON.stringify(objects, null, 2)}`);
-    if (objects.length < 1) {
-      continue;
+  for (const currentKey of keys) {
+    const objectName = `${currentKey}${suffix}`;
+    try {
+      const stat = await mc.statObject(bucket, objectName);
+      core.info(`Found object ${objectName} in bucket ${bucket}`);
+      return {
+        item: { name: objectName, size: stat.size },
+        matchingKey: currentKey,
+      };
+    } catch (err: any) {
+      if (err.code !== "NotFound") {
+        core.warning(`Error checking object ${objectName}: ${err.message}`);
+      } else {
+        core.info(`Object ${objectName} not found in bucket ${bucket}`);
+      }
     }
-    const sorted = objects.sort(
-      (a, b) => b.lastModified.getTime() - a.lastModified.getTime()
-    );
-    const result = { item: sorted[0], matchingKey: restoreKey };
-    core.debug(`Using latest ${JSON.stringify(result)}`);
-    return result;
   }
-  throw new Error("Cache item not found");
+
+  throw new Error(`No cache entry found for keys: ${keys.join(", ")}`);
 }
 
 export function listObjects(
@@ -211,18 +203,17 @@ export async function saveCache(standalone: boolean) {
         region: standalone ? getInput("region", "AWS_REGION") : core.getState(State.Region),
       });
 
-      const compressionMethod = CompressionMethod.None;
       const cachePaths = await utils.resolvePaths(paths);
       core.debug("Cache Paths:");
       core.debug(`${JSON.stringify(cachePaths)}`);
 
       const archiveFolder = await utils.createTempDirectory();
-      const cacheFileName = utils.getCacheFileName(compressionMethod);
+      const cacheFileName = "cache.tar";
       const archivePath = path.join(archiveFolder, cacheFileName);
 
       core.info(`Archive Path: ${archivePath}`);
 
-      await createTar(archiveFolder, cachePaths, compressionMethod);
+      await createTar(archiveFolder, cachePaths);
       if (core.isDebug()) {
         await listTar(archivePath);
       }
