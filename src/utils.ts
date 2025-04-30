@@ -4,7 +4,8 @@ import * as core from "@actions/core";
 import * as minio from "minio";
 import { State } from "./state";
 import path from "path";
-import {createTar, listTar} from "@actions/cache/lib/internal/tar";
+import { createTar } from "./createTar";
+import { listTar } from "@actions/cache/lib/internal/tar";
 import * as cache from "@actions/cache";
 
 export function isGhes(): boolean {
