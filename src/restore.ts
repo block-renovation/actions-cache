@@ -41,7 +41,7 @@ async function restoreCache() {
       const mc = newMinio();
 
       const compressionMethod = CompressionMethod.None;
-      const cacheFileName = utils.getCacheFileName(compressionMethod);
+      const cacheFileName = "cache.tar";
       const archivePath = path.join(
         await utils.createTempDirectory(),
         cacheFileName
