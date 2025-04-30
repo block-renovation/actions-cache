@@ -220,7 +220,7 @@ export async function saveCache(standalone: boolean) {
       const cacheFileName = utils.getCacheFileName(compressionMethod);
       const archivePath = path.join(archiveFolder, cacheFileName);
 
-      core.debug(`Archive Path: ${archivePath}`);
+      core.info(`Archive Path: ${archivePath}`);
 
       await createTar(archiveFolder, cachePaths, compressionMethod);
       if (core.isDebug()) {
@@ -229,9 +229,10 @@ export async function saveCache(standalone: boolean) {
 
       const object = path.join(key, cacheFileName);
 
-      core.info(`Uploading tar to s3. Bucket: ${bucket}, Object: ${object}`);
+      const now = () => new Date().toISOString();
+      core.info(`[${now()}] Uploading tar to s3. Bucket: ${bucket}, Object: ${object}`);
       await mc.fPutObject(bucket, object, archivePath, {});
-      core.info("Cache saved to s3 successfully");
+      core.info(`[${now()}] Cache saved to bucket successfully (took ${(new Date().getTime() - new Date(now()).getTime())/1000}s)`);
     } catch (e) {
       if (useFallback) {
         if (isGhes()) {
