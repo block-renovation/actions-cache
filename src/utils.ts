@@ -123,7 +123,7 @@ export async function findObject(
   }
 
   for (const restoreKey of restoreKeys) {
-    const fn = utils.getCacheFileName(compressionMethod);
+    const fn = "cache.tar";
     core.debug(`Finding object with prefix: ${restoreKey}`);
     let objects = await listObjects(mc, bucket, restoreKey);
     objects = objects.filter((o) => o.name.includes(fn));
