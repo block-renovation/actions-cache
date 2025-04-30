@@ -5,7 +5,7 @@ import * as minio from "minio";
 import { State } from "./state";
 import path from "path";
 import { createTar } from "./createTar";
-import { listTar } from "@actions/cache/lib/internal/tar";
+import { listTar } from "./listTar";
 import * as cache from "@actions/cache";
 
 export function isGhes(): boolean {
@@ -224,7 +224,7 @@ export async function saveCache(standalone: boolean) {
 
       await createTar(archiveFolder, cachePaths, compressionMethod);
       if (core.isDebug()) {
-        await listTar(archivePath, compressionMethod);
+        await listTar(archivePath);
       }
 
       const object = path.join(key, cacheFileName);
