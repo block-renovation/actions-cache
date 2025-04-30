@@ -211,7 +211,7 @@ export async function saveCache(standalone: boolean) {
         region: standalone ? getInput("region", "AWS_REGION") : core.getState(State.Region),
       });
 
-      const compressionMethod = await utils.getCompressionMethod();
+      const compressionMethod = CompressionMethod.None;
       const cachePaths = await utils.resolvePaths(paths);
       core.debug("Cache Paths:");
       core.debug(`${JSON.stringify(cachePaths)}`);
