@@ -18,8 +18,7 @@ export async function createTar(
 }
 
 function getCacheFileName(compressionMethod: CompressionMethod): string {
-  const extension = compressionMethod === CompressionMethod.Gzip ? "tgz" : "tar";
-  return `cache.${extension}`;
+  return `cache.tar`; // always .tar since we're skipping compression
 }
 
 async function tarDirectory(
@@ -28,10 +27,7 @@ async function tarDirectory(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(archivePath);
-    const archive = archiver("tar", {
-      gzip: true,
-      gzipOptions: { level: 1 }
-    });
+    const archive = archiver("tar"); // 👈 no gzip at all
 
     output.on("close", () => {
       core.debug(`Tarball size: ${archive.pointer()} bytes`);
